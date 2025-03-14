@@ -1,84 +1,148 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { getTrees, addTree, resetTrees } from "./api";
+import "./App.css";
 
 function App() {
-    const [trees, setTrees] = useState([]);
-    const [formData, setFormData] = useState({
-        treename: "",
-        description: "",
-        image: null
-    });
+  const [treeName, setTreeName] = useState("");
+  const [description, setDescription] = useState("");
+  const [image, setImage] = useState(null);
+  const [previewImage, setPreviewImage] = useState(
+    "https://tecwood.com.vn/upload/images/Post/anh-cay-xanh-dep.jpg"
+  );
+  const [trees, setTrees] = useState([]);
 
-    useEffect(() => {
-        fetchTrees();
-    }, []);
+  useEffect(() => {
+    fetchTrees();
+  }, []);
 
-    const fetchTrees = async () => {
-        const data = await getTrees();
-        setTrees(data);
-    };
+  const fetchTrees = async () => {
+    const data = await getTrees();
+    setTrees(data);
+  };
 
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
+  const handleImageUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setImage(file);
+      const reader = new FileReader();
+      reader.onload = (e) => setPreviewImage(e.target.result);
+      reader.readAsDataURL(file);
+    }
+  };
 
-    const handleFileChange = (e) => {
-        setFormData({ ...formData, image: e.target.files[0] });
-    };
+  const handleAddTree = async () => {
+    if (!treeName || !description) return;
+    const formData = new FormData();
+    formData.append("treename", treeName);
+    formData.append("description", description);
+    if (image) {
+      formData.append("image", image);
+    }
+    await addTree(formData);
+    fetchTrees();
+    resetForm();
+  };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        const data = new FormData();
-        data.append("treename", formData.treename);
-        data.append("description", formData.description);
-        if (formData.image) data.append("image", formData.image);
+  const handleResetTrees = async () => {
+    await resetTrees();
+    fetchTrees();
+  };
 
-        await addTree(data);
-        fetchTrees();
-    };
-
-    const handleReset = async () => {
-        await resetTrees();
-        fetchTrees();
-    };
-
-    return (
-        <div>
-            <h1>Tree Shop</h1>
-
-            <form onSubmit={handleSubmit}>
-                <input type="text" name="treename" placeholder="Tree Name" required onChange={handleChange} />
-                <textarea name="description" placeholder="Description" required onChange={handleChange} />
-                <input type="file" name="image" onChange={handleFileChange} />
-                <button type="submit">Add</button>
-                <button type="button" onClick={handleReset}>Reset</button>
-            </form>
-
-            <h2>Tree List</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Image</th>
-                        <th>Description</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {trees.map((tree, index) => (
-                        <tr key={tree._id}>
-                            <td>{index + 1}</td>
-                            <td>{tree.treename}</td>
-                            <td>
-                                {tree.image && <img src={`http://localhost:5000${tree.image}`} width="50" alt="Tree" />}
-                            </td>
-                            <td>{tree.description}</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
+  const resetForm = () => {
+    setTreeName("");
+    setDescription("");
+    setImage(null);
+    setPreviewImage(
+      "https://tecwood.com.vn/upload/images/Post/anh-cay-xanh-dep.jpg"
     );
+  };
+
+  return (
+    <div>
+      <header>
+        <div style={{ flex: 1 }}>Tree Shop</div>
+        <div style={{ flex: 1, textAlign: "right" }}>About Me</div>
+      </header>
+
+      <div className="container">
+        <div className="image-preview">
+          <img id="previewImage" src={previewImage} alt="Tree Preview" />
+        </div>
+        <div className="form-container">
+          <h1>Tree Shop</h1>
+          <div className="form-group">
+            <label htmlFor="treeName">Tree Name</label>
+            <input
+              type="text"
+              id="treeName"
+              value={treeName}
+              onChange={(e) => setTreeName(e.target.value)}
+              placeholder="Phong lan"
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="description">Description</label>
+            <textarea
+              id="description"
+              rows="4"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Nhắc đến ý nghĩa..."
+            />
+          </div>
+          <div className="form-group image-input">
+            <label htmlFor="imageUpload">Image</label>
+            <input
+              type="file"
+              id="imageUpload"
+              accept="image/*"
+              onChange={handleImageUpload}
+            />
+            <button
+              className="browse-btn"
+              onClick={() => document.getElementById("imageUpload").click()}
+            >
+              Browse
+            </button>
+          </div>
+          <button onClick={handleAddTree}>Add</button>
+          <button className="reset" onClick={resetForm}>
+            Reset
+          </button>
+          <button className="reset" onClick={handleResetTrees}>
+            Reset All Trees
+          </button>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Image</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          {trees.map((tree) => (
+            <tr key={tree._id}>
+              <td>{tree._id}</td>
+              <td>{tree.treename}</td>
+              <td>
+                <img src={tree.image} alt={tree.treename} width="50" />
+              </td>
+              <td>{tree.description}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <footer>
+        <p>Số 8, Tôn Thất Thuyết, Cầu Giấy, Hà Nội</p>
+      </footer>
+    </div>
+  );
 }
 
 export default App;

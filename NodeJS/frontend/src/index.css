@@ -98,5 +98,3 @@ h1 {
 .download-button:hover {
   background-color: #1558c8;
 }
-
-@import "tailwindcss";
